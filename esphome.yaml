@@ -1,0 +1,262 @@
+ name: blue
+api:
+  encryption:
+    key: "/i1N9hcxlR2D4BZnEzM3naJnkEj7r8qCtHDjcqfDMKg="
+ota:
+  password: "0042338229d833ced1eac262e3fc6730"
+# web_server:
+#   port: 80
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+bluetooth_proxy:
+ active: true
+# Enable logging
+logger:
+
+switch:
+  - platform: restart
+    name: "Blue"
+  - platform: template
+    name: "Blue 2 set temp"
+    turn_on_action:
+      - ble_client.ble_write:
+          id: mug2
+          service_uuid: 'fc543622-236c-4c94-8fa9-944a3e5353fa'
+          characteristic_uuid: 'fc540003-236c-4c94-8fa9-944a3e5353fa'
+          # List of bytes to write.
+          value:  [168, 22]
+  - platform: template
+    name: "Blue 1 set temp"
+    turn_on_action:
+      - ble_client.ble_write:
+          id: mug1
+          service_uuid: 'fc543622-236c-4c94-8fa9-944a3e5353fa'
+          characteristic_uuid: 'fc540003-236c-4c94-8fa9-944a3e5353fa'
+          # List of bytes to write.
+          value:  [168, 22]
+  - platform: template
+    name: "Blue 3 set temp"
+    turn_on_action:
+      - ble_client.ble_write:
+          id: mug3
+          service_uuid: 'fc543622-236c-4c94-8fa9-944a3e5353fa'
+          characteristic_uuid: 'fc540003-236c-4c94-8fa9-944a3e5353fa'
+          # List of bytes to write.
+          value:  [168, 22]    
+  - platform: template
+    name: "Blue 3 temp off"
+    turn_on_action:
+      - ble_client.ble_write:
+          id: mug3
+          service_uuid: 'fc543622-236c-4c94-8fa9-944a3e5353fa'
+          characteristic_uuid: 'fc540003-236c-4c94-8fa9-944a3e5353fa'
+          # List of bytes to write.
+          value:  [0, 0]      
+  - platform: template
+    name: "Blue 2 temp off"
+    turn_on_action:
+      - ble_client.ble_write:
+          id: mug2
+          service_uuid: 'fc543622-236c-4c94-8fa9-944a3e5353fa'
+          characteristic_uuid: 'fc540003-236c-4c94-8fa9-944a3e5353fa'
+          # List of bytes to write.
+          value:  [0, 0]
+  - platform: template
+    name: "Blue 1 temp off"
+    turn_on_action:
+      - ble_client.ble_write:
+          id: mug1
+          service_uuid: 'fc543622-236c-4c94-8fa9-944a3e5353fa'
+          characteristic_uuid: 'fc540003-236c-4c94-8fa9-944a3e5353fa'
+          # List of bytes to write.
+          value:  [0, 0]
+wifi:
+  ssid: "TP-Link_659F_New"
+  password: "2beornot2be"
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Blue Fallback Hotspot"
+    password: "2beornot2be"
+
+captive_portal:
+
+ble_client:
+  # - mac_address: C2:7B:7C:49:CB:06
+  #   id: radon_eye_ble_id
+  - mac_address: C1:20:6D:B1:75:0E
+    id: mug1
+  - mac_address: C6:0E:6F:D8:CD:FC
+    id: mug2
+  - mac_address: E9:C7:84:6D:E7:60
+    id: mug3
+esp32_ble_tracker:
+
+text_sensor:
+  - platform: template
+    name: "Mug 1 power state"
+    id: mug1_sensor
+  - platform: template
+    name: "Mug 2 power state"
+    id: mug2_sensor
+  - platform: template
+    name: "Mug 3 power state"
+    id: mug3_sensor
+sensor:
+
+  - platform: ble_client
+    type: characteristic
+    ble_client_id: mug1
+    name: "Mug 1 battery level"
+    service_uuid: 'fc543622-236c-4c94-8fa9-944a3e5353fa'
+    characteristic_uuid: 'fc540007-236c-4c94-8fa9-944a3e5353fa'
+    icon: 'mdi:battery'
+    unit_of_measurement: '%'
+    lambda: |-
+      uint16_t battery = x[0];
+      if (x[1] & 1) {
+        id(mug1_sensor).publish_state("on");
+      }else {
+        id(mug1_sensor).publish_state("off");
+      }
+      return (float)battery;
+  - platform: ble_client
+    type: characteristic
+    ble_client_id: mug1
+    name: "Mug 1 temp"
+    service_uuid: 'fc543622-236c-4c94-8fa9-944a3e5353fa'
+    characteristic_uuid: 'fc540002-236c-4c94-8fa9-944a3e5353fa'
+    icon: 'mdi:battery'
+    unit_of_measurement: "°F"
+    lambda: |-
+      uint16_t temp_byte = x[0];
+      temp_byte += (x[1] << 8);
+      temp_byte = temp_byte * .01;
+      temp_byte = ((temp_byte * 9) / 5) + 32;
+      return temp_byte;
+  - platform: ble_client
+    type: characteristic
+    ble_client_id: mug1
+    name: "Mug 1 target temp"
+    service_uuid: 'fc543622-236c-4c94-8fa9-944a3e5353fa'
+    characteristic_uuid: 'fc540003-236c-4c94-8fa9-944a3e5353fa'
+    icon: 'mdi:battery'
+    unit_of_measurement: "°F"
+    lambda: |-
+      uint16_t temp_byte = x[0];
+      temp_byte += (x[1] << 8);
+      temp_byte = temp_byte * .01;
+      temp_byte = ((temp_byte * 9) / 5) + 32;
+      return temp_byte;
+  - platform: ble_client
+    type: characteristic
+    ble_client_id: mug1
+    name: "Mug 1 state"
+    service_uuid: 'fc543622-236c-4c94-8fa9-944a3e5353fa'
+    characteristic_uuid: 'fc540008-236c-4c94-8fa9-944a3e5353fa'
+
+  - platform: ble_client
+    type: characteristic
+    ble_client_id: mug2
+    name: "Mug 2 battery level"
+    service_uuid: 'fc543622-236c-4c94-8fa9-944a3e5353fa'
+    characteristic_uuid: 'fc540007-236c-4c94-8fa9-944a3e5353fa'
+    icon: 'mdi:battery'
+    unit_of_measurement: '%'
+    lambda: |-
+      uint16_t battery = x[0];
+      if (x[1] & 1) {
+        id(mug2_sensor).publish_state("on");
+      }else {
+        id(mug2_sensor).publish_state("off");
+      }
+      return (float)battery;
+
+  - platform: ble_client
+    type: characteristic
+    ble_client_id: mug2
+    name: "Mug 2 temp"
+    service_uuid: 'fc543622-236c-4c94-8fa9-944a3e5353fa'
+    characteristic_uuid: 'fc540002-236c-4c94-8fa9-944a3e5353fa'
+    icon: 'mdi:battery'
+    unit_of_measurement: "°F"
+    lambda: |-
+      uint16_t temp_byte = x[0];
+      temp_byte += (x[1] << 8);
+      temp_byte = temp_byte * .01;
+      temp_byte = ((temp_byte * 9) / 5) + 32;
+      return temp_byte;
+  - platform: ble_client
+    type: characteristic
+    ble_client_id: mug2
+    name: "Mug 2 target temp"
+    service_uuid: 'fc543622-236c-4c94-8fa9-944a3e5353fa'
+    characteristic_uuid: 'fc540003-236c-4c94-8fa9-944a3e5353fa'
+    icon: 'mdi:battery'
+    unit_of_measurement: "°F"
+    lambda: |-
+      uint16_t temp_byte = x[0];
+      temp_byte += (x[1] << 8);
+      temp_byte = temp_byte * .01;
+      temp_byte = ((temp_byte * 9) / 5) + 32;
+      return temp_byte;
+  - platform: ble_client
+    type: characteristic
+    ble_client_id: mug2
+    name: "Mug 2 state"
+    service_uuid: 'fc543622-236c-4c94-8fa9-944a3e5353fa'
+    characteristic_uuid: 'fc540008-236c-4c94-8fa9-944a3e5353fa'
+
+  - platform: ble_client
+    type: characteristic
+    ble_client_id: mug3
+    name: "Mug 3 battery level"
+    service_uuid: 'fc543622-236c-4c94-8fa9-944a3e5353fa'
+    characteristic_uuid: 'fc540007-236c-4c94-8fa9-944a3e5353fa'
+    icon: 'mdi:battery'
+    unit_of_measurement: '%'
+    lambda: |-
+      uint16_t battery = x[0];
+      if (x[1] & 1) {
+        id(mug3_sensor).publish_state("on");
+      }else {
+        id(mug3_sensor).publish_state("off");
+      }
+      return (float)battery;
+
+  - platform: ble_client
+    type: characteristic
+    ble_client_id: mug3
+    name: "Mug 3 temp"
+    service_uuid: 'fc543622-236c-4c94-8fa9-944a3e5353fa'
+    characteristic_uuid: 'fc540002-236c-4c94-8fa9-944a3e5353fa'
+    icon: 'mdi:battery'
+    unit_of_measurement: "°F"
+    lambda: |-
+      uint16_t temp_byte = x[0];
+      temp_byte += (x[1] << 8);
+      temp_byte = temp_byte * .01;
+      temp_byte = ((temp_byte * 9) / 5) + 32;
+      return temp_byte;
+  - platform: ble_client
+    type: characteristic
+    ble_client_id: mug3
+    name: "Mug 3 target temp"
+    service_uuid: 'fc543622-236c-4c94-8fa9-944a3e5353fa'
+    characteristic_uuid: 'fc540003-236c-4c94-8fa9-944a3e5353fa'
+    icon: 'mdi:battery'
+    unit_of_measurement: "°F"
+    lambda: |-
+      uint16_t temp_byte = x[0];
+      temp_byte += (x[1] << 8);
+      temp_byte = temp_byte * .01;
+      temp_byte = ((temp_byte * 9) / 5) + 32;
+      return temp_byte;
+  - platform: ble_client
+    type: characteristic
+    ble_client_id: mug3
+    name: "Mug 3 state"
+    service_uuid: 'fc543622-236c-4c94-8fa9-944a3e5353fa'
+    characteristic_uuid: 'fc540008-236c-4c94-8fa9-944a3e5353fa'
